@@ -1,0 +1,39 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: Report build errors
+        if: failure()
+        run: |
+          ERR=$(grep -E "^e: |error:|What went wrong|Could not|FAILED|Unresolved|Exception" build.log | head -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=Build failed::${ERR}"
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk SmartAlarm.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SmartAlarm-APK
+          path: SmartAlarm.apk
