@@ -93,13 +93,13 @@ fun ProfileScreen(nav: NavState) {
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
                 if (name.trim() != Prefs.name) IconButton(onClick = {
-                    Prefs.setName(name.trim())
+                    Prefs.saveName(name.trim())
                     Toast.makeText(ctx, tr("Saved", "सेव हो गया"), Toast.LENGTH_SHORT).show()
                 }) { Icon(Icons.Filled.Check, tr("Save", "सेव")) }
             }
         )
         if (name.trim() != Prefs.name) Button(
-            onClick = { Prefs.setName(name.trim()); Toast.makeText(ctx, tr("Saved", "सेव हो गया"), Toast.LENGTH_SHORT).show() },
+            onClick = { Prefs.saveName(name.trim()); Toast.makeText(ctx, tr("Saved", "सेव हो गया"), Toast.LENGTH_SHORT).show() },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
         ) { Text(tr("Save Changes", "Changes सेव करें")) }
 
@@ -167,7 +167,7 @@ fun SettingsScreen(nav: NavState) {
         Column(Modifier.fillMaxSize().padding(pad).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
 
             SectionTitle(tr("Alarm", "Alarm"))
-            SoundPicker(Prefs.defaultSound, { Prefs.setDefaultSound(it) }, allowDefault = false)
+            SoundPicker(Prefs.defaultSound, { Prefs.saveDefaultSound(it) }, allowDefault = false)
             Text(
                 tr("Default sound for tasks that don't have their own sound.", "जिन Tasks का अपना Sound नहीं है, उनमें यही बजेगा।"),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp)
@@ -179,31 +179,31 @@ fun SettingsScreen(nav: NavState) {
                 Text(tr("Alarm volume", "Alarm Volume"), modifier = Modifier.weight(1f))
                 Text("${(Prefs.volume * 100).toInt()}%", fontWeight = FontWeight.Bold)
             }
-            Slider(value = Prefs.volume, onValueChange = { Prefs.setVolume(it) }, valueRange = 0.1f..1f)
+            Slider(value = Prefs.volume, onValueChange = { Prefs.saveVolume(it) }, valueRange = 0.1f..1f)
             Text(
                 tr("Phone's alarm volume also applies.", "फ़ोन का Alarm Volume भी लागू होता है।"),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            SwitchRow(Icons.Filled.Vibration, tr("Vibration", "Vibration"), null, Prefs.vibration) { Prefs.setVibration(it) }
+            SwitchRow(Icons.Filled.Vibration, tr("Vibration", "Vibration"), null, Prefs.vibration) { Prefs.saveVibration(it) }
             SwitchRow(
                 Icons.Filled.Replay, tr("Repeat alarm", "Alarm दोहराएँ"),
                 tr("If not answered in 3 min, ring again after 5 min (up to 3 times)", "3 मिनट में जवाब न मिले तो 5 मिनट बाद फिर बजे (3 बार तक)"),
                 Prefs.autoRepeat
-            ) { Prefs.setAutoRepeat(it) }
+            ) { Prefs.saveAutoRepeat(it) }
 
             SectionTitle(tr("Appearance", "भाषा और Theme"))
             Text(tr("Language", "भाषा"), style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = Prefs.hindi, onClick = { Prefs.setHindi(true) }, label = { Text("हिंदी") })
-                FilterChip(selected = !Prefs.hindi, onClick = { Prefs.setHindi(false) }, label = { Text("English") })
+                FilterChip(selected = Prefs.hindi, onClick = { Prefs.saveHindi(true) }, label = { Text("हिंदी") })
+                FilterChip(selected = !Prefs.hindi, onClick = { Prefs.saveHindi(false) }, label = { Text("English") })
             }
             Spacer(Modifier.height(8.dp))
             Text(tr("Theme", "Theme"), style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = Prefs.theme == Prefs.THEME_SYSTEM, onClick = { Prefs.setTheme(Prefs.THEME_SYSTEM) }, label = { Text(tr("System", "System")) })
-                FilterChip(selected = Prefs.theme == Prefs.THEME_LIGHT, onClick = { Prefs.setTheme(Prefs.THEME_LIGHT) }, label = { Text(tr("Light", "Light")) },
+                FilterChip(selected = Prefs.theme == Prefs.THEME_SYSTEM, onClick = { Prefs.saveTheme(Prefs.THEME_SYSTEM) }, label = { Text(tr("System", "System")) })
+                FilterChip(selected = Prefs.theme == Prefs.THEME_LIGHT, onClick = { Prefs.saveTheme(Prefs.THEME_LIGHT) }, label = { Text(tr("Light", "Light")) },
                     leadingIcon = { Icon(Icons.Filled.LightMode, null, Modifier.size(18.dp)) })
-                FilterChip(selected = Prefs.theme == Prefs.THEME_DARK, onClick = { Prefs.setTheme(Prefs.THEME_DARK) }, label = { Text(tr("Dark", "Dark")) },
+                FilterChip(selected = Prefs.theme == Prefs.THEME_DARK, onClick = { Prefs.saveTheme(Prefs.THEME_DARK) }, label = { Text(tr("Dark", "Dark")) },
                     leadingIcon = { Icon(Icons.Filled.DarkMode, null, Modifier.size(18.dp)) })
             }
 

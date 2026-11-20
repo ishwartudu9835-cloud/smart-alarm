@@ -47,13 +47,13 @@ object Prefs {
         ready = true
     }
 
-    fun setName(v: String) { name = v; sp.edit().putString("name", v).apply() }
-    fun setHindi(v: Boolean) { hindi = v; sp.edit().putBoolean("hindi", v).apply() }
-    fun setTheme(v: Int) { theme = v; sp.edit().putInt("theme", v).apply() }
-    fun setVolume(v: Float) { volume = v; sp.edit().putFloat("volume", v).apply() }
-    fun setVibration(v: Boolean) { vibration = v; sp.edit().putBoolean("vibration", v).apply() }
-    fun setAutoRepeat(v: Boolean) { autoRepeat = v; sp.edit().putBoolean("autoRepeat", v).apply() }
-    fun setDefaultSound(v: String?) { defaultSound = v; sp.edit().putString("defaultSound", v).apply() }
+    fun saveName(v: String) { name = v; sp.edit().putString("name", v).apply() }
+    fun saveHindi(v: Boolean) { hindi = v; sp.edit().putBoolean("hindi", v).apply() }
+    fun saveTheme(v: Int) { theme = v; sp.edit().putInt("theme", v).apply() }
+    fun saveVolume(v: Float) { volume = v; sp.edit().putFloat("volume", v).apply() }
+    fun saveVibration(v: Boolean) { vibration = v; sp.edit().putBoolean("vibration", v).apply() }
+    fun saveAutoRepeat(v: Boolean) { autoRepeat = v; sp.edit().putBoolean("autoRepeat", v).apply() }
+    fun saveDefaultSound(v: String?) { defaultSound = v; sp.edit().putString("defaultSound", v).apply() }
     fun photoChanged() { photoVersion++ }
 
     var lastGeneratedDay: Long
