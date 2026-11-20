@@ -1,5 +1,6 @@
 package com.ishwar.smartalarm.alarm
 
+import android.app.KeyguardManager
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
@@ -113,8 +114,16 @@ class AlarmService : Service() {
                 finish()
             }
             else -> {
-                // turant foreground me aana zaroori hai
-                startFg(buildNotification(null))
+                // Pehli notification me hi full-screen intent hona zaroori hai —
+                // Android update par full-screen nahi kholta.
+                val title = intent?.getStringExtra(EXTRA_TITLE)
+                val first = if (title != null) Occurrence(
+                    id = occId, kind = 0, sourceId = 0, title = title,
+                    description = intent.getStringExtra(EXTRA_DESC) ?: "", day = TimeUtil.today(),
+                    startMin = intent.getIntExtra(EXTRA_START, TimeUtil.minuteOfDay(System.currentTimeMillis()))
+                ) else null
+                startFg(buildNotification(first))
+                if (first != null) showOnLockScreen(first)
                 scope.launch {
                     val data = withContext(Dispatchers.IO) { load(occId) }
                     if (data == null) {
@@ -125,7 +134,10 @@ class AlarmService : Service() {
                     stopSound()
                     current = data
                     stopped = false
-                    startFg(buildNotification(data.occ))
+                    if (first == null) {
+                        startFg(buildNotification(data.occ))
+                        showOnLockScreen(data.occ)
+                    }
                     begin(data)
                 }
             }
@@ -161,6 +173,40 @@ class AlarmService : Service() {
         ServiceCompat.startForeground(this, NOTIF_ID, n, type)
     }
 
+    private fun alarmActivityIntent(o: Occurrence) = Intent(this, AlarmActivity::class.java).apply {
+        putExtra(EXTRA_OCC, o.id)
+        putExtra(EXTRA_TITLE, o.title)
+        putExtra(EXTRA_DESC, o.description)
+        putExtra(EXTRA_START, o.startMin)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
+    }
+
+    /**
+     * Phone lock / screen off ho to alarm screen seedha kholo (backup, agar phone
+     * full-screen notification na dikhaye). Phone chalu aur unlocked ho to kuch nahi —
+     * tab upar wala notification hi dikhta hai.
+     */
+    private fun showOnLockScreen(o: Occurrence) {
+        val pm = getSystemService(PowerManager::class.java)
+        val km = getSystemService(KeyguardManager::class.java)
+        val locked = !pm.isInteractive || km.isKeyguardLocked
+        if (!locked) return
+        // screen jalao
+        try {
+            @Suppress("DEPRECATION")
+            val wl = pm.newWakeLock(
+                PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                "SmartAlarm:screen"
+            )
+            wl.acquire(15_000L)
+        } catch (e: Exception) { }
+        try {
+            startActivity(alarmActivityIntent(o))
+        } catch (e: Exception) {
+            // Android ne rok diya — full-screen notification par bharosa
+        }
+    }
+
     private fun buildNotification(o: Occurrence?): Notification {
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         val b = NotificationCompat.Builder(this, Notifier.CH_ALARM)
@@ -172,13 +218,7 @@ class AlarmService : Service() {
         if (o == null) {
             return b.setContentTitle(getString(R.string.app_name)).setContentText("…").build()
         }
-        val full = Intent(this, AlarmActivity::class.java).apply {
-            putExtra(EXTRA_OCC, o.id)
-            putExtra(EXTRA_TITLE, o.title)
-            putExtra(EXTRA_DESC, o.description)
-            putExtra(EXTRA_START, o.startMin)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
-        }
+        val full = alarmActivityIntent(o)
         val fullPi = PendingIntent.getActivity(this, 20, full, flags)
         fun svc(action: String, code: Int, min: Int = 0) = PendingIntent.getService(
             this, code,

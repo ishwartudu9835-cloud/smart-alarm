@@ -313,9 +313,10 @@ data class AlarmHealth(
     val notifications: Boolean,
     val exact: Boolean,
     val fullScreen: Boolean,
-    val battery: Boolean
+    val battery: Boolean,
+    val overlay: Boolean
 ) {
-    val allOk get() = notifications && exact && fullScreen
+    val allOk get() = notifications && exact && fullScreen && overlay
 }
 
 fun alarmHealth(ctx: Context): AlarmHealth {
@@ -323,7 +324,29 @@ fun alarmHealth(ctx: Context): AlarmHealth {
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     val fs = if (Build.VERSION.SDK_INT >= 34) ctx.getSystemService(NotificationManager::class.java).canUseFullScreenIntent() else true
     val pm = ctx.getSystemService(PowerManager::class.java)
-    return AlarmHealth(notif, AlarmEngine.canExact(ctx), fs, pm.isIgnoringBatteryOptimizations(ctx.packageName))
+    return AlarmHealth(
+        notif, AlarmEngine.canExact(ctx), fs, pm.isIgnoringBatteryOptimizations(ctx.packageName),
+        Settings.canDrawOverlays(ctx)
+    )
+}
+
+/** "Display over other apps" — lock screen par alarm popup kholne ke liye */
+fun openOverlaySettings(ctx: Context) {
+    runCatching {
+        ctx.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${ctx.packageName}")))
+    }.onFailure { openAppSettings(ctx) }
+}
+
+val isXiaomi: Boolean
+    get() = Build.MANUFACTURER.lowercase().let { it.contains("xiaomi") || it.contains("redmi") || it.contains("poco") }
+
+/** Xiaomi/Redmi/Poco: "Show on lock screen" + "Display pop-up windows while running in background" */
+fun openXiaomiPermissions(ctx: Context) {
+    val i = Intent("miui.intent.action.APP_PERM_EDITOR").apply {
+        setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
+        putExtra("extra_pkgname", ctx.packageName)
+    }
+    runCatching { ctx.startActivity(i) }.onFailure { openAppSettings(ctx) }
 }
 
 fun openExactAlarmSettings(ctx: Context) {
@@ -381,6 +404,12 @@ private fun SetupBanner(now: Long) {
             }
             if (!health.fullScreen) TextButton(onClick = { openFullScreenSettings(ctx) }) {
                 Text("• " + tr("Allow full-screen alarm", "Full-screen alarm चालू करें"))
+            }
+            if (!health.overlay) TextButton(onClick = { openOverlaySettings(ctx) }) {
+                Text("• " + tr("Allow \"Display over other apps\" (lock screen popup)", "\"Display over other apps\" चालू करें (Lock screen popup)"))
+            }
+            if (isXiaomi) TextButton(onClick = { openXiaomiPermissions(ctx) }) {
+                Text("• " + tr("Xiaomi: allow \"Show on lock screen\" & pop-ups", "Xiaomi: \"Show on Lock screen\" और Pop-up चालू करें"))
             }
         }
     }

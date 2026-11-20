@@ -53,7 +53,7 @@ class AlarmReceiver : BroadcastReceiver() {
             AlarmEngine.TYPE_SNOOZE -> {
                 val o = dao.occ(id) ?: return
                 if (o.status == ST_COMPLETED) return
-                startRinging(ctx, o.id)
+                startRinging(ctx, o)
             }
             AlarmEngine.TYPE_MISSED -> {
                 val o = dao.occ(id) ?: return
@@ -69,13 +69,16 @@ class AlarmReceiver : BroadcastReceiver() {
         if (o.status == ST_COMPLETED) return
         val dl = Repo.deadlineMillis(o)
         if (dl > System.currentTimeMillis()) AlarmEngine.scheduleMissedCheck(ctx, o.id, dl)
-        startRinging(ctx, o.id)
+        startRinging(ctx, o)
     }
 
-    private fun startRinging(ctx: Context, occId: Long) {
+    private fun startRinging(ctx: Context, o: Occurrence) {
         val i = Intent(ctx, AlarmService::class.java)
             .setAction(AlarmService.ACTION_RING)
-            .putExtra(AlarmService.EXTRA_OCC, occId)
+            .putExtra(AlarmService.EXTRA_OCC, o.id)
+            .putExtra(AlarmService.EXTRA_TITLE, o.title)
+            .putExtra(AlarmService.EXTRA_DESC, o.description)
+            .putExtra(AlarmService.EXTRA_START, o.startMin)
         ContextCompat.startForegroundService(ctx, i)
     }
 }

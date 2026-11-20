@@ -213,6 +213,13 @@ fun SettingsScreen(nav: NavState) {
             }
             PermRow(tr("Exact alarms (Alarms & reminders)", "समय पर Alarm (Alarms & reminders)"), health.exact) { openExactAlarmSettings(ctx) }
             PermRow(tr("Full-screen alarm", "Full-screen Alarm"), health.fullScreen) { openFullScreenSettings(ctx) }
+            PermRow(tr("Lock screen popup (Display over other apps)", "Lock screen popup (Display over other apps)"), health.overlay) { openOverlaySettings(ctx) }
+            if (isXiaomi) Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.PhoneAndroid, null, tint = StatusOrange)
+                Spacer(Modifier.width(12.dp))
+                Text(tr("Xiaomi: Show on lock screen + pop-ups", "Xiaomi: Show on Lock screen + Pop-ups"), Modifier.weight(1f))
+                TextButton(onClick = { openXiaomiPermissions(ctx) }) { Text(tr("Open", "खोलें")) }
+            }
             PermRow(tr("Microphone (voice recording)", "Microphone (Voice Recording)"), mic) { micLauncher.launch(Manifest.permission.RECORD_AUDIO) }
             PermRow(tr("No battery restriction", "Battery Restriction नहीं"), health.battery) { openBatterySettings(ctx) }
 
